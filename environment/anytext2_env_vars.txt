@@ -1,0 +1,1 @@
+LD_LIBRARY_PATH = /root/miniconda3/envs/anytext2/lib:/usr/local/cuda/lib64:/usr/local/cuda/compat/lib.real:/usr/local/cuda/compat/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64

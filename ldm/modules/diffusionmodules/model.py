@@ -8,13 +8,15 @@ from typing import Optional, Any
 
 from ldm.modules.attention import MemoryEfficientCrossAttention
 
-try:
-    import xformers
-    import xformers.ops
-    XFORMERS_IS_AVAILBLE = True
-except:
-    XFORMERS_IS_AVAILBLE = False
-    print("No module 'xformers'. Proceeding without it.")
+#try:
+#    import xformers
+#    import xformers.ops
+#    XFORMERS_IS_AVAILBLE = True
+#except:
+#    XFORMERS_IS_AVAILBLE = False
+#    print("No module 'xformers'. Proceeding without it.")
+# xformers does not work on Blackwell
+XFORMERS_IS_AVAILBLE = False
 
 
 def get_timestep_embedding(timesteps, embedding_dim):
