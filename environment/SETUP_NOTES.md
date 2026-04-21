@@ -44,9 +44,25 @@ conda install -n anytext2 cuda-cudart cuda-libraries cuda-cupti -c nvidia/label/
 The vast.ai container ships a system Python 3.12 with its own torch. Its `LD_LIBRARY_PATH` includes `/usr/local/lib/python3.12/dist-packages/torch/lib`, which leaks incompatible `.so` files into the conda env. Fix by setting env-scoped vars:
 
 ```bash
-conda env config vars set LD_LIBRARY_PATH=/root/miniconda3/envs/anytext2/lib:/usr/local/cuda/lib64:/usr/local/cuda/compat/lib.real:/usr/local/cuda/compat/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+conda env config vars set LD_LIBRARY_PATH=/root/miniconda3/envs/anytext2/lib:/usr/local/cuda/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
 conda deactivate
 conda activate anytext2
+```
+
+**Do NOT include `/usr/local/cuda/compat/lib.real` or `/usr/local/cuda/compat/lib`** in `LD_LIBRARY_PATH`. Those dirs ship a toolkit-bundled `libcuda.so.590.48.01`. CUDA's forward-compatibility layer is one-directional: it only supports *newer* userspace libcuda on top of an *older* kernel driver. If the host's kernel driver is ever upgraded to a version newer than the compat lib (e.g., the 590 → 595 host upgrade on 2026-04-18), preloading the old compat libcuda against the new kernel produces:
+
+```
+Error 803: system has unsupported display driver / cuda driver combination
+torch.cuda.is_available() == False
+```
+
+The system already provides the matching userspace lib at `/usr/lib/x86_64-linux-gnu/libcuda.so.<driver-version>` via `ldconfig`, so omitting the compat dirs lets the loader pick the correct one automatically.
+
+Sanity check after activating the env — `nvidia-smi` should report a CUDA version that matches the host driver (not a stale older one), and:
+
+```bash
+python -c "import torch; print(torch.cuda.is_available()); torch.randn(3).cuda()"
+# Expected: True, no error
 ```
 
 ### 5. Install Dependencies from environment.yaml (with fixes)
